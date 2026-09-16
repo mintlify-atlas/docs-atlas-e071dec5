@@ -1,5 +1,5 @@
 ---
-title: "Get Started with Akam Token Development"
+title: "Akam Token Development: Getting Started with Foundry"
 sidebarTitle: "Getting Started"
 description: "Set up the Akam Token development environment with Foundry, install dependencies, build the contract, and run the full test suite in under five minutes."
 ---
@@ -35,13 +35,13 @@ This downloads `foundryup` (the Foundry version manager) and installs the latest
   </Step>
 
   <Step title="Install dependencies">
-    Fetch the two library dependencies — `openzeppelin-contracts` and `forge-std` — recorded in `foundry.lock`:
+    Fetch the two library dependencies — `openzeppelin-contracts` and `forge-std` — pinned as git submodules:
 
     ```bash
     forge install
     ```
 
-    Forge resolves the exact commits pinned in the lock file and places them under `lib/`.
+    Forge resolves the pinned git submodule commits and places them under `lib/`.
   </Step>
 
   <Step title="Build the contract">
@@ -69,7 +69,7 @@ This downloads `foundryup` (the Foundry version manager) and installs the latest
 
 The repository is intentionally minimal — one contract, one test file, and Foundry configuration:
 
-```
+```text
 Akam-Token/
 ├── contracts/
 │   └── AkamToken.sol       # Core ERC-20 Token Contract

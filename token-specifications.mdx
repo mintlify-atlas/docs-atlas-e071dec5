@@ -1,5 +1,5 @@
 ---
-title: "AKAM Token Specifications and Network Details"
+title: "AKAM Token Technical Specifications and Network Details"
 sidebarTitle: "Token Specs"
 description: "Complete technical specifications for the AKAM ERC-20 token: name, symbol, decimals, total supply, contract address, and Polygon PoS network details."
 ---
@@ -52,7 +52,7 @@ This means the raw on-chain `totalSupply()` value is:
 400,000,000 × 10^18 = 400000000000000000000000000
 ```
 
-That 26-digit integer is the number stored in the ERC-20 contract's internal balance mapping and returned by `totalSupply()`. Human-readable interfaces divide by `10^18` to display `400,000,000 AKAM`.
+That 27-digit integer is the number stored in the ERC-20 contract's internal balance mapping and returned by `totalSupply()`. Human-readable interfaces divide by `10^18` to display `400,000,000 AKAM`.
 
 <Tip>
   When working with token amounts in code, always use the raw 18-decimal

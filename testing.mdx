@@ -1,7 +1,7 @@
 ---
 title: "Running and Understanding the AkamToken Test Suite"
 sidebarTitle: "Testing"
-description: "Explore the AkamToken Foundry test suite: unit tests covering metadata, supply, transfers, approvals, and fuzz tests that verify supply conservation invariants."
+description: "Explore the AkamToken Foundry test suite: unit tests for metadata, supply, transfers, approvals, and fuzz tests verifying supply conservation invariants."
 ---
 
 The AkamToken test suite is written with Foundry's [forge-std](https://github.com/foundry-rs/forge-std) `Test` framework and lives in `test/AkamToken.t.sol`. It covers seven distinct areas: token metadata, initial supply distribution, basic transfers, approvals, delegated `transferFrom` flows, supply conservation invariants, and property-based fuzz tests. Every test is self-contained — `setUp` deploys a fresh `AkamToken` instance before each function runs — so tests never share state.
