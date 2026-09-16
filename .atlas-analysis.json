@@ -1,0 +1,54 @@
+{
+  "projectType": "general",
+  "projectName": "Akam Token (AKAM)",
+  "projectDescription": "A simple, immutable ERC-20 token with a fixed supply of 400 million AKAM deployed on the Polygon PoS network.",
+  "theme": "luma",
+  "primaryColor": "#7c7c7c",
+  "lightColor": "#121212",
+  "darkColor": "#c6c6c6",
+  "navigation": {
+    "groups": [
+      {
+        "group": "Overview",
+        "pages": [
+          "introduction",
+          "token-specifications"
+        ]
+      },
+      {
+        "group": "Development",
+        "pages": [
+          "getting-started",
+          "contract-reference",
+          "testing"
+        ]
+      },
+      {
+        "group": "Integration",
+        "pages": [
+          "integration/erc20-interface",
+          "integration/interacting-with-the-contract"
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Fixed supply of 400,000,000 AKAM — no minting after deployment",
+    "Standard ERC-20 compliant (transfer, approve, transferFrom, allowance)",
+    "No owner or privileged admin functions — fully decentralized",
+    "Deployed on Polygon PoS for low-cost, fast transactions",
+    "Built with Foundry and OpenZeppelin Contracts v5",
+    "Comprehensive unit and fuzz test suite"
+  ],
+  "publicApiSurface": [
+    "name() → string",
+    "symbol() → string",
+    "decimals() → uint8",
+    "totalSupply() → uint256",
+    "balanceOf(address account) → uint256",
+    "transfer(address to, uint256 amount) → bool",
+    "approve(address spender, uint256 amount) → bool",
+    "allowance(address owner, address spender) → uint256",
+    "transferFrom(address from, address to, uint256 amount) → bool"
+  ]
+}

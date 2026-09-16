@@ -1,0 +1,168 @@
+---
+title: "Running and Understanding the AkamToken Test Suite"
+sidebarTitle: "Testing"
+description: "Explore the AkamToken Foundry test suite: unit tests covering metadata, supply, transfers, approvals, and fuzz tests that verify supply conservation invariants."
+---
+
+The AkamToken test suite is written with Foundry's [forge-std](https://github.com/foundry-rs/forge-std) `Test` framework and lives in `test/AkamToken.t.sol`. It covers seven distinct areas: token metadata, initial supply distribution, basic transfers, approvals, delegated `transferFrom` flows, supply conservation invariants, and property-based fuzz tests. Every test is self-contained — `setUp` deploys a fresh `AkamToken` instance before each function runs — so tests never share state.
+
+## Running Tests
+
+```bash
+forge test                                  # run all tests
+forge test -vvv                             # verbose with call traces
+forge test --match-test test_Transfer       # run a specific test by name
+forge test --match-test testFuzz            # run all fuzz tests
+```
+
+<Tip>
+  Run `forge test --match-test testFuzz -vvv` to see fuzz run counts and, if any invariant fails, the exact counterexample inputs that triggered the failure.
+</Tip>
+
+## Test Categories
+
+### 1. Metadata
+
+**Functions:** `test_Name`, `test_Symbol`, `test_Decimals`
+
+These three tests confirm that the token's identifying properties match the values hard-coded in the constructor.
+
+| Test | Assertion |
+| :--- | :--- |
+| `test_Name` | `token.name()` equals `"Akam"` |
+| `test_Symbol` | `token.symbol()` equals `"AKAM"` |
+| `test_Decimals` | `token.decimals()` equals `18` |
+
+---
+
+### 2. Initial Supply
+
+**Functions:** `test_InitialTotalSupply`, `test_InitialSupplyBelongsToDeployer`, `test_OtherAddressesStartWithZeroBalance`
+
+These tests verify that the constructor mints exactly 400,000,000 × 10¹⁸ tokens to the deploying address and that all other accounts begin with a zero balance.
+
+| Test | Assertion |
+| :--- | :--- |
+| `test_InitialTotalSupply` | `totalSupply()` equals `400_000_000 * 10**18` |
+| `test_InitialSupplyBelongsToDeployer` | `balanceOf(deployer)` equals `INITIAL_SUPPLY` |
+| `test_OtherAddressesStartWithZeroBalance` | `balanceOf(alice)` and `balanceOf(bob)` both equal `0` |
+
+---
+
+### 3. Transfers
+
+**Functions:** `test_Transfer`, `test_MultipleTransfers`, `test_TransferZeroAmount`, `test_RevertWhenTransferExceedsBalance`, `test_RevertWhenTransferFromZeroAddress`
+
+These tests exercise the `transfer` function across the full range of valid and invalid scenarios.
+
+| Test | What it checks |
+| :--- | :--- |
+| `test_Transfer` | Sender balance decreases, recipient balance increases by the correct amount |
+| `test_MultipleTransfers` | Two sequential transfers update all three balances correctly and do not alter `totalSupply` |
+| `test_TransferZeroAmount` | Transferring zero tokens succeeds and leaves all balances unchanged |
+| `test_RevertWhenTransferExceedsBalance` | Reverts when `amount > balance` |
+| `test_RevertWhenTransferFromZeroAddress` | Reverts when the zero address attempts to transfer |
+
+---
+
+### 4. Approvals
+
+**Functions:** `test_Approve`, `test_ApproveCanChangeAllowance`
+
+These tests confirm that `approve` sets the allowance correctly and that calling it a second time overwrites — not adds to — the existing allowance.
+
+| Test | What it checks |
+| :--- | :--- |
+| `test_Approve` | Returns `true`; `allowance(deployer, alice)` equals the approved amount |
+| `test_ApproveCanChangeAllowance` | Calling `approve` twice updates the allowance to the second value |
+
+---
+
+### 5. transferFrom
+
+**Functions:** `test_TransferFrom`, `test_TransferFromConsumesAllowance`, `test_TransferFromMultipleTimes`, `test_RevertWhenTransferFromExceedsAllowance`, `test_RevertWhenTransferFromExceedsBalance`
+
+These tests validate the delegated transfer flow: a spender approved by the token owner moves tokens on the owner's behalf.
+
+| Test | What it checks |
+| :--- | :--- |
+| `test_TransferFrom` | Correct balances and allowance drops to zero after full spend |
+| `test_TransferFromConsumesAllowance` | Remaining allowance equals `approved − transferred` after a partial spend |
+| `test_TransferFromMultipleTimes` | Two sequential `transferFrom` calls each decrement the allowance correctly |
+| `test_RevertWhenTransferFromExceedsAllowance` | Reverts when `amount > allowance` |
+| `test_RevertWhenTransferFromExceedsBalance` | Reverts when `amount > owner's balance` even with a sufficient allowance |
+
+---
+
+### 6. Supply Invariants
+
+**Functions:** `test_TransferDoesNotCreateTokens`, `test_TransferFromDoesNotCreateTokens`, `test_NoOwnerFunction`
+
+These tests document fundamental design guarantees of the contract.
+
+| Test | What it checks |
+| :--- | :--- |
+| `test_TransferDoesNotCreateTokens` | `totalSupply` is unchanged after a `transfer` |
+| `test_TransferFromDoesNotCreateTokens` | `totalSupply` is unchanged after a `transferFrom` |
+| `test_NoOwnerFunction` | Documents the absence of an `owner()` function and any privileged admin role; asserts `totalSupply` remains constant |
+
+---
+
+### 7. Fuzz Tests
+
+**Functions:** `testFuzz_TransferPreservesSupply(uint128 amount)`, `testFuzz_ApproveAndTransferFrom(uint128 amount)`
+
+Property-based tests that Foundry runs with hundreds of randomly generated inputs to search for counterexamples. Because the parameter type is `uint128`, every cast to `uint256` is safe and amounts never silently overflow beyond `INITIAL_SUPPLY`.
+
+| Test | Property verified |
+| :--- | :--- |
+| `testFuzz_TransferPreservesSupply` | `balanceOf(deployer) + balanceOf(alice) == INITIAL_SUPPLY` and `totalSupply == INITIAL_SUPPLY` for any valid transfer amount |
+| `testFuzz_ApproveAndTransferFrom` | After approve + transferFrom, `balanceOf(bob) == amount`, `balanceOf(deployer) == INITIAL_SUPPLY - amount`, and `totalSupply == INITIAL_SUPPLY` |
+
+---
+
+## Example: Unit Test
+
+The following test is a representative example of the transfer category. It sends a fixed amount from the deployer to `alice` and asserts both balances update correctly:
+
+```solidity
+function test_Transfer() public {
+    uint256 amount = 100_000 * 10 ** 18;
+
+    token.transfer(alice, amount);
+
+    assertEq(token.balanceOf(alice), amount);
+    assertEq(token.balanceOf(deployer), INITIAL_SUPPLY - amount);
+}
+```
+
+## Example: Fuzz Test
+
+The following test is run by Foundry with random `uint128` values for `amount`. The `vm.assume` guard discards any input that exceeds the total supply, keeping the fuzz corpus focused on valid transfer amounts:
+
+```solidity
+function testFuzz_TransferPreservesSupply(
+    uint128 amount
+) public {
+    uint256 transferAmount = uint256(amount);
+
+    vm.assume(transferAmount <= INITIAL_SUPPLY);
+
+    token.transfer(alice, transferAmount);
+
+    assertEq(
+        token.balanceOf(deployer) + token.balanceOf(alice),
+        INITIAL_SUPPLY
+    );
+
+    assertEq(token.totalSupply(), INITIAL_SUPPLY);
+}
+```
+
+## Fuzz Testing
+
+Foundry automatically detects functions prefixed with `testFuzz_` and treats them as property-based tests. Instead of a single fixed input, Forge generates hundreds of pseudorandom values and runs the function once per input, looking for any case that causes an assertion to fail.
+
+The fuzz tests in this suite use `uint128` as the parameter type rather than `uint256`. This is deliberate: casting a `uint128` value to `uint256` can never overflow, so `transferAmount` is guaranteed to fit within a `uint256` variable. Combined with the `vm.assume(transferAmount <= INITIAL_SUPPLY)` guard, this ensures every fuzz run operates on a valid, in-range amount — Forge will simply discard runs where the assumption fails and draw a new input.
+
+If a fuzz run finds a counterexample (an input for which the property fails), Forge prints the failing seed and input so the test can be reproduced deterministically by re-running with `--fuzz-seed <seed>`.

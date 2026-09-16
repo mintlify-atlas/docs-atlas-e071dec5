@@ -1,0 +1,135 @@
+---
+title: "Get Started with Akam Token Development"
+sidebarTitle: "Getting Started"
+description: "Set up the Akam Token development environment with Foundry, install dependencies, build the contract, and run the full test suite in under five minutes."
+---
+
+This page walks you through everything you need to start working with the Akam Token (AKAM) codebase. You'll clone the repository, install Foundry, compile `AkamToken.sol`, and run the full unit and fuzz test suite — all in a few minutes.
+
+## Prerequisites
+
+Before you begin, make sure you have the following installed:
+
+- **Foundry** — the Solidity build toolchain and test runner used by this project
+- **Git** — to clone the repository
+- **A terminal** — any POSIX-compatible shell works (macOS Terminal, Linux bash, WSL on Windows)
+
+If you don't have Foundry yet, install it with:
+
+```bash
+curl -L https://foundry.paradigm.xyz | bash
+foundryup
+```
+
+This downloads `foundryup` (the Foundry version manager) and installs the latest stable versions of `forge`, `cast`, and `anvil`.
+
+## Installation
+
+<Steps>
+  <Step title="Clone the repository">
+    Download the source code and navigate into the project directory:
+
+    ```bash
+    git clone https://github.com/Elvatar2/Akam-Token.git && cd Akam-Token
+    ```
+  </Step>
+
+  <Step title="Install dependencies">
+    Fetch the two library dependencies — `openzeppelin-contracts` and `forge-std` — recorded in `foundry.lock`:
+
+    ```bash
+    forge install
+    ```
+
+    Forge resolves the exact commits pinned in the lock file and places them under `lib/`.
+  </Step>
+
+  <Step title="Build the contract">
+    Compile the project with the Solidity 0.8.20 compiler. Artifacts are written to the `out/` directory:
+
+    ```bash
+    forge build
+    ```
+
+    A successful build prints `Compiler run successful!`. The optimizer is enabled with 200 runs, matching the settings in `foundry.toml`.
+  </Step>
+
+  <Step title="Run the test suite">
+    Execute all unit and fuzz tests:
+
+    ```bash
+    forge test
+    ```
+
+    All tests should pass. For a detailed breakdown of each test case, see [Testing](/testing).
+  </Step>
+</Steps>
+
+## Project Structure
+
+The repository is intentionally minimal — one contract, one test file, and Foundry configuration:
+
+```
+Akam-Token/
+├── contracts/
+│   └── AkamToken.sol       # Core ERC-20 Token Contract
+├── test/
+│   └── AkamToken.t.sol     # Unit tests for the token
+├── foundry.toml
+├── remappings.txt
+└── README.md
+```
+
+| Path | Purpose |
+| :--- | :--- |
+| `contracts/AkamToken.sol` | The token contract — inherits OpenZeppelin ERC20 |
+| `test/AkamToken.t.sol` | Foundry test suite (unit + fuzz) |
+| `foundry.toml` | Compiler and project settings |
+| `remappings.txt` | Import path aliases for `@openzeppelin/` and `forge-std/` |
+
+## Foundry Configuration
+
+The `foundry.toml` file controls how the project is compiled and formatted:
+
+```toml
+[profile.default]
+src            = "contracts"
+out            = "out"
+libs           = ["lib"]
+test           = "test"
+script         = "script"
+solc_version   = "0.8.20"
+optimizer      = true
+optimizer_runs = 200
+
+[fmt]
+line_length    = 120
+tab_width      = 4
+bracket_spacing = true
+```
+
+| Setting | Value | Meaning |
+| :--- | :--- | :--- |
+| `src` | `"contracts"` | Forge looks for Solidity source files in `contracts/` |
+| `out` | `"out"` | Compiled artifacts (ABI, bytecode) are written to `out/` |
+| `libs` | `["lib"]` | Library dependencies live under `lib/` |
+| `solc_version` | `"0.8.20"` | Pins the exact Solidity compiler version used for builds |
+| `optimizer` | `true` | Enables the Solidity optimizer to reduce deployment gas |
+| `optimizer_runs` | `200` | Optimizes for a contract called ~200 times — a balanced default |
+
+The `[fmt]` section configures `forge fmt` (the Solidity auto-formatter): 120-character line width, 4-space indentation, and spaces inside brackets.
+
+## Useful Commands
+
+| Command | What it does |
+| :--- | :--- |
+| `forge build` | Compile all contracts to `out/` |
+| `forge test` | Run the full test suite |
+| `forge test -vvv` | Run tests with verbose trace output |
+| `forge test --match-test <name>` | Run only tests whose name contains `<name>` |
+| `forge fmt` | Auto-format all Solidity source files |
+| `forge clean` | Remove the `out/` and `cache/` directories |
+
+<Tip>
+  Run `forge test -vvv` for verbose output showing individual test names, pass/fail status, and execution traces. This is the fastest way to debug a failing test.
+</Tip>

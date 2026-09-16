@@ -1,20 +1,57 @@
 ---
-title: "Introduction"
-description: "Welcome to your project"
+title: "Akam Token (AKAM): Immutable ERC-20 on Polygon"
+sidebarTitle: "Home"
+description: "AKAM is a fixed-supply ERC-20 token deployed on Polygon PoS. 400 million tokens, no minting, no admin keys — fully decentralized from day one."
 ---
 
-Write a short description of your product here. What it does, who it's for, and what they can accomplish with it.
+Akam Token (AKAM) is a minimal, immutable ERC-20 smart contract deployed on the Polygon PoS network. With a hard-capped supply of 400,000,000 AKAM minted at construction and no owner or admin functions, the token is fully decentralized and requires no ongoing governance. It is built with OpenZeppelin's audited ERC-20 implementation and developed using the Foundry toolchain.
 
-<Tip>
-  Ready to make this your own? Start by editing this page. Update your `docs.json` file to customize your site. Then fill out the [Quickstart](/quickstart) page.
-</Tip>
+<CardGroup cols={2}>
+  <Card title="Introduction" icon="circle-info" href="/introduction">
+    Learn what Akam Token is, why it was built on Polygon, and what makes it fully trustless.
+  </Card>
+  <Card title="Token Specifications" icon="table" href="/token-specifications">
+    Name, symbol, decimals, total supply, and network details at a glance.
+  </Card>
+  <Card title="Getting Started" icon="rocket" href="/getting-started">
+    Clone the repo, install Foundry dependencies, build, and run tests in minutes.
+  </Card>
+  <Card title="Contract Reference" icon="file-code" href="/contract-reference">
+    Full ABI reference for every public function on AkamToken.
+  </Card>
+  <Card title="ERC-20 Interface" icon="plug" href="/integration/erc20-interface">
+    Every standard ERC-20 method and event the contract exposes.
+  </Card>
+  <Card title="Interacting with the Contract" icon="terminal" href="/integration/interacting-with-the-contract">
+    Query balances, transfer tokens, and manage allowances using ethers.js, cast, or Polygonscan.
+  </Card>
+</CardGroup>
 
-<Card title="Quickstart" icon="rocket" href="/quickstart">
-  This card links to the quickstart page in your project.
-</Card>
-<Card title="Components" icon="puzzle-piece" href="https://mintlify.com/docs/components">
-  Add cards, callouts, steps, tabs, and more to design and structure your pages.
-</Card>
-<Card title="Settings" icon="gear" href="https://mintlify.com/docs/organize/settings">
-  Set your site name, branding, and navigation in the `docs.json` file.
-</Card>
+## Quick overview
+
+<Steps>
+  <Step title="Clone and install dependencies">
+    ```bash
+    git clone https://github.com/Elvatar2/Akam-Token.git
+    cd Akam-Token
+    forge install
+    ```
+  </Step>
+  <Step title="Build the contract">
+    ```bash
+    forge build
+    ```
+  </Step>
+  <Step title="Run the test suite">
+    ```bash
+    forge test
+    ```
+  </Step>
+  <Step title="Integrate">
+    Import the ABI and use the standard ERC-20 interface to transfer tokens, approve spenders, and query balances from any Solidity contract or off-chain client.
+  </Step>
+</Steps>
+
+<Note>
+  AKAM has a **fixed supply**. There is no `mint` function and no privileged owner — once deployed, the total supply of 400,000,000 AKAM can never change.
+</Note>

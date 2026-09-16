@@ -1,0 +1,289 @@
+---
+title: "AkamToken Contract ABI Reference"
+sidebarTitle: "Contract Reference"
+description: "Full ABI reference for AkamToken: every public function, parameter, return type, and event inherited from OpenZeppelin ERC20 with usage examples."
+---
+
+`AkamToken` is a Solidity `^0.8.20` contract that inherits the full ERC-20 interface from [OpenZeppelin's `ERC20` base contract](https://docs.openzeppelin.com/contracts/5.x/erc20). It exposes no custom functions beyond the standard: the constructor mints a fixed supply of 400,000,000 AKAM to the deployer, and the contract is immutable from that point forward. The source file is located at `contracts/AkamToken.sol`, and it imports OpenZeppelin via the remapping `@openzeppelin/=lib/openzeppelin-contracts/`.
+
+## Contract Source
+
+```solidity
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.20;
+
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+
+
+contract AkamToken is ERC20 {
+    uint256 private constant INITIAL_SUPPLY = 400_000_000;
+
+    constructor() ERC20("Akam", "AKAM") {
+        _mint(msg.sender, INITIAL_SUPPLY * 10 ** decimals());
+    }
+}
+```
+
+<Note>
+  AkamToken does **not** expose `mint`, `burn`, `owner`, or `pause` functions. The contract is fully immutable post-deployment — the total supply is fixed at 400,000,000 AKAM forever.
+</Note>
+
+## Constants
+
+`INITIAL_SUPPLY` is a private constant used exclusively in the constructor to calculate the total minted supply.
+
+| Name | Type | Value | Visibility |
+| :--- | :--- | :--- | :--- |
+| `INITIAL_SUPPLY` | `uint256` | `400_000_000` | `private constant` |
+
+The amount minted to the deployer equals `INITIAL_SUPPLY * 10 ** decimals()` = `400_000_000 × 10^18` token units.
+
+## Read Functions
+
+These functions are `view` — they do not modify state and cost no gas when called off-chain.
+
+---
+
+### `name()`
+
+Returns the human-readable name of the token.
+
+```solidity
+function name() public view returns (string memory)
+```
+
+**Returns**
+
+<ResponseField name="name" type="string">
+  Always `"Akam"`.
+</ResponseField>
+
+---
+
+### `symbol()`
+
+Returns the ticker symbol of the token.
+
+```solidity
+function symbol() public view returns (string memory)
+```
+
+**Returns**
+
+<ResponseField name="symbol" type="string">
+  Always `"AKAM"`.
+</ResponseField>
+
+---
+
+### `decimals()`
+
+Returns the number of decimal places used to represent token amounts.
+
+```solidity
+function decimals() public view returns (uint8)
+```
+
+**Returns**
+
+<ResponseField name="decimals" type="uint8">
+  Always `18`. One whole AKAM token equals `1 × 10^18` base units.
+</ResponseField>
+
+---
+
+### `totalSupply()`
+
+Returns the total number of tokens in existence.
+
+```solidity
+function totalSupply() public view returns (uint256)
+```
+
+**Returns**
+
+<ResponseField name="totalSupply" type="uint256">
+  Always `400_000_000 × 10^18` (`400000000000000000000000000`). This value never changes — there is no mint or burn mechanism.
+</ResponseField>
+
+---
+
+### `balanceOf(address account)`
+
+Returns the token balance of a given address.
+
+```solidity
+function balanceOf(address account) public view returns (uint256)
+```
+
+**Parameters**
+
+<ParamField path="account" type="address" required>
+  The wallet or contract address to query.
+</ParamField>
+
+**Returns**
+
+<ResponseField name="balance" type="uint256">
+  The number of AKAM base units (scaled by `10^18`) held by `account`. Returns `0` for any address that has never received tokens.
+</ResponseField>
+
+---
+
+### `allowance(address owner, address spender)`
+
+Returns how many tokens `spender` is currently approved to spend on behalf of `owner`.
+
+```solidity
+function allowance(address owner, address spender) public view returns (uint256)
+```
+
+**Parameters**
+
+<ParamField path="owner" type="address" required>
+  The address that owns the tokens.
+</ParamField>
+
+<ParamField path="spender" type="address" required>
+  The address whose spending limit is being queried.
+</ParamField>
+
+**Returns**
+
+<ResponseField name="remaining" type="uint256">
+  The remaining number of base units `spender` may transfer from `owner`. Returns `0` if no approval has been granted.
+</ResponseField>
+
+---
+
+## Write Functions
+
+These functions modify on-chain state and must be submitted as transactions. Each requires the caller to pay gas.
+
+---
+
+### `transfer(address to, uint256 amount) → bool`
+
+Moves `amount` tokens from the caller's balance to `to`.
+
+```solidity
+function transfer(address to, uint256 amount) public returns (bool)
+```
+
+**Parameters**
+
+<ParamField path="to" type="address" required>
+  The recipient address. Must not be the zero address.
+</ParamField>
+
+<ParamField path="amount" type="uint256" required>
+  The number of base units to transfer. Must not exceed the caller's balance.
+</ParamField>
+
+**Returns**
+
+<ResponseField name="success" type="bool">
+  Always `true` on success. Reverts (never returns `false`) if the caller's balance is insufficient or `to` is the zero address.
+</ResponseField>
+
+**Emits** `Transfer(from, to, amount)`
+
+---
+
+### `approve(address spender, uint256 amount) → bool`
+
+Grants `spender` permission to spend up to `amount` tokens on the caller's behalf.
+
+```solidity
+function approve(address spender, uint256 amount) public returns (bool)
+```
+
+**Parameters**
+
+<ParamField path="spender" type="address" required>
+  The address being granted the spending allowance.
+</ParamField>
+
+<ParamField path="amount" type="uint256" required>
+  The maximum number of base units `spender` may transfer. Call again with a new value to update the allowance; set to `0` to revoke.
+</ParamField>
+
+**Returns**
+
+<ResponseField name="success" type="bool">
+  Always `true`. The allowance is overwritten to `amount` regardless of any previous value.
+</ResponseField>
+
+**Emits** `Approval(owner, spender, amount)`
+
+---
+
+### `transferFrom(address from, address to, uint256 amount) → bool`
+
+Moves `amount` tokens from `from` to `to` using the caller's pre-approved allowance.
+
+```solidity
+function transferFrom(address from, address to, uint256 amount) public returns (bool)
+```
+
+**Parameters**
+
+<ParamField path="from" type="address" required>
+  The address whose tokens are being spent. The caller must have been granted an allowance of at least `amount` by `from`.
+</ParamField>
+
+<ParamField path="to" type="address" required>
+  The recipient address. Must not be the zero address.
+</ParamField>
+
+<ParamField path="amount" type="uint256" required>
+  The number of base units to transfer. Must not exceed the caller's allowance from `from`, or `from`'s balance.
+</ParamField>
+
+**Returns**
+
+<ResponseField name="success" type="bool">
+  Always `true` on success. Reverts if the allowance or balance is insufficient.
+</ResponseField>
+
+The allowance granted by `from` to the caller is decremented by `amount` after a successful call (unless the allowance was set to `type(uint256).max`).
+
+**Emits** `Transfer(from, to, amount)` and implicitly updates the allowance.
+
+---
+
+## Events
+
+Both events are inherited from the ERC-20 standard and emitted by the OpenZeppelin base contract.
+
+---
+
+### `Transfer`
+
+Emitted whenever tokens are moved between addresses, including the initial mint from `address(0)`.
+
+```solidity
+event Transfer(address indexed from, address indexed to, uint256 value)
+```
+
+| Parameter | Type | Indexed | Description |
+| :--- | :--- | :--- | :--- |
+| `from` | `address` | ✅ | Sender address (`address(0)` on mint) |
+| `to` | `address` | ✅ | Recipient address |
+| `value` | `uint256` | ❌ | Number of base units transferred |
+
+---
+
+### `Approval`
+
+Emitted whenever an allowance is set or updated via `approve`.
+
+```solidity
+event Approval(address indexed owner, address indexed spender, uint256 value)
+```
+
+| Parameter | Type | Indexed | Description |
+| :--- | :--- | :--- | :--- |
+| `owner` | `address` | ✅ | The address granting the approval |
+| `spender` | `address` | ✅ | The address receiving the approval |
+| `value` | `uint256` | ❌ | The new allowance amount in base units |

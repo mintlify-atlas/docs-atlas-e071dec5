@@ -1,0 +1,194 @@
+---
+title: "Interacting with AkamToken: ethers.js, cast, and Polygonscan"
+sidebarTitle: "Interacting"
+description: "Query AKAM balances, transfer tokens, and manage allowances using ethers.js v6, Foundry cast CLI, and Polygonscan — with real code examples for each approach."
+---
+
+This page shows how to interact with the deployed AkamToken contract from off-chain using three common approaches: **ethers.js** (Node.js), **Foundry's `cast` CLI**, and the **Polygonscan** block explorer web UI. Whether you are building an application, scripting one-off queries, or simply exploring the contract, one of these methods will fit your workflow.
+
+<Warning>
+  Never expose your private key in code or commit it to source control. Use
+  environment variables or a secrets manager to handle credentials in all
+  environments.
+</Warning>
+
+## Network configuration
+
+AkamToken is deployed on **Polygon PoS** (Chain ID `137`). Use a reliable public or private RPC endpoint when connecting.
+
+| Property | Value |
+|---|---|
+| Network | Polygon PoS |
+| Chain ID | `137` |
+| Public RPC | `https://polygon-rpc.com` |
+| Block Explorer | `https://polygonscan.com` |
+
+Configure a read-only provider in ethers.js v6:
+
+```javascript
+import { JsonRpcProvider } from "ethers";
+
+const provider = new JsonRpcProvider("https://polygon-rpc.com");
+```
+
+<Tip>
+  Token amounts are always in 18-decimal base units. Use `parseUnits("100", 18)`
+  from ethers.js or multiply by `10**18` to convert from human-readable AKAM to
+  base units.
+</Tip>
+
+## Querying token data with ethers.js
+
+Instantiate the contract using a minimal human-readable ABI and the deployed AKAM address, then call any view function without a signer.
+
+```javascript
+import { JsonRpcProvider, Contract, formatUnits } from "ethers";
+
+const AKAM_ADDRESS = "/* AKAM contract address */";
+const ERC20_ABI = [
+  "function name() view returns (string)",
+  "function symbol() view returns (string)",
+  "function decimals() view returns (uint8)",
+  "function totalSupply() view returns (uint256)",
+  "function balanceOf(address) view returns (uint256)",
+  "function allowance(address,address) view returns (uint256)",
+  "function transfer(address,uint256) returns (bool)",
+  "function approve(address,uint256) returns (bool)",
+  "function transferFrom(address,address,uint256) returns (bool)",
+];
+
+const provider = new JsonRpcProvider("https://polygon-rpc.com");
+const akam = new Contract(AKAM_ADDRESS, ERC20_ABI, provider);
+
+// Token metadata
+const name = await akam.name();         // "Akam"
+const symbol = await akam.symbol();     // "AKAM"
+const decimals = await akam.decimals(); // 18n
+
+// Total supply
+const totalSupply = await akam.totalSupply();
+console.log("Total supply:", formatUnits(totalSupply, 18)); // "400000000.0"
+
+// Balance of an address
+const balance = await akam.balanceOf("0xYourAddress");
+console.log("Balance:", formatUnits(balance, 18));
+
+// Remaining allowance granted by owner to spender
+const allowance = await akam.allowance("0xOwnerAddress", "0xSpenderAddress");
+console.log("Allowance:", formatUnits(allowance, 18));
+```
+
+All read calls above are free — they do not require a wallet, gas, or a private key.
+
+## Sending transactions with ethers.js
+
+State-changing operations (`transfer`, `approve`, `transferFrom`) require a funded wallet on Polygon PoS. Connect a `Wallet` signer to the contract before calling write functions.
+
+```javascript
+import { Wallet, parseUnits } from "ethers";
+
+// Connect a signer — load the private key from an environment variable
+const signer = new Wallet(process.env.PRIVATE_KEY, provider);
+const akamWithSigner = akam.connect(signer);
+
+// Transfer 100 AKAM to a recipient
+const tx = await akamWithSigner.transfer(
+  "0xRecipient",
+  parseUnits("100", 18)
+);
+await tx.wait();
+console.log("Transfer confirmed:", tx.hash);
+
+// Approve a spender to use up to 1 000 AKAM on your behalf
+const approveTx = await akamWithSigner.approve(
+  "0xSpender",
+  parseUnits("1000", 18)
+);
+await approveTx.wait();
+console.log("Approval confirmed:", approveTx.hash);
+
+// A spender contract calls transferFrom after receiving approval
+const transferFromTx = await akamWithSigner.transferFrom(
+  "0xOwner",
+  "0xRecipient",
+  parseUnits("500", 18)
+);
+await transferFromTx.wait();
+console.log("transferFrom confirmed:", transferFromTx.hash);
+```
+
+<Note>
+  `tx.wait()` resolves once the transaction has been included in a block. You
+  can pass a confirmation count (e.g. `tx.wait(3)`) to wait for additional
+  block confirmations before treating the transaction as final.
+</Note>
+
+## Using Foundry cast
+
+Foundry's `cast` CLI lets you query and send transactions directly from the terminal without writing any JavaScript.
+
+```bash
+# Read total supply (returns raw uint256 in wei)
+cast call <AKAM_ADDRESS> "totalSupply()" \
+  --rpc-url https://polygon-rpc.com
+
+# Read the AKAM balance of an address
+cast call <AKAM_ADDRESS> "balanceOf(address)" <YOUR_ADDRESS> \
+  --rpc-url https://polygon-rpc.com
+
+# Read the allowance granted from one address to another
+cast call <AKAM_ADDRESS> "allowance(address,address)" \
+  <OWNER_ADDRESS> <SPENDER_ADDRESS> \
+  --rpc-url https://polygon-rpc.com
+
+# Transfer tokens — amount must be provided in base units (wei)
+cast send <AKAM_ADDRESS> "transfer(address,uint256)" \
+  <RECIPIENT> <AMOUNT_IN_WEI> \
+  --private-key <YOUR_PRIVATE_KEY> \
+  --rpc-url https://polygon-rpc.com
+
+# Approve a spender
+cast send <AKAM_ADDRESS> "approve(address,uint256)" \
+  <SPENDER> <AMOUNT_IN_WEI> \
+  --private-key <YOUR_PRIVATE_KEY> \
+  --rpc-url https://polygon-rpc.com
+```
+
+To convert a human-readable amount to base units on the command line, use `cast to-wei`:
+
+```bash
+# Convert 100 AKAM to base units
+cast to-wei 100 ether   # outputs 100000000000000000000
+```
+
+## Using Polygonscan
+
+[Polygonscan](https://polygonscan.com) provides a point-and-click interface for interacting with any verified contract on Polygon PoS — no code required.
+
+<Steps>
+  <Step title="Open the contract page">
+    Navigate to `https://polygonscan.com/address/<AKAM_CONTRACT_ADDRESS>` and
+    click the **Contract** tab to see the verified source code and ABI.
+  </Step>
+  <Step title="Read contract state">
+    Click **Read Contract** to expand the list of view functions. Enter any
+    required parameters (such as an address for `balanceOf`) and click **Query**
+    to see the result. No wallet connection is needed for read operations.
+  </Step>
+  <Step title="Connect your wallet">
+    To send transactions, click **Write Contract** and then **Connect to Web3**.
+    Polygonscan supports MetaMask and any WalletConnect-compatible wallet. Make
+    sure your wallet is set to the **Polygon** network (Chain ID 137).
+  </Step>
+  <Step title="Write contract state">
+    With your wallet connected, expand any write function (e.g. `transfer` or
+    `approve`), fill in the parameters, and click **Write**. Your wallet will
+    prompt you to confirm the transaction and pay the gas fee in MATIC.
+  </Step>
+</Steps>
+
+<Tip>
+  Polygonscan displays raw `uint256` values. Remember to divide by `10^18` when
+  reading balances and supply figures, or use a tool like `cast from-wei` to
+  convert the result to a human-readable format.
+</Tip>

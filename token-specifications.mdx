@@ -1,0 +1,83 @@
+---
+title: "AKAM Token Specifications and Network Details"
+sidebarTitle: "Token Specs"
+description: "Complete technical specifications for the AKAM ERC-20 token: name, symbol, decimals, total supply, contract address, and Polygon PoS network details."
+---
+
+This page covers every technical parameter a developer or integrator needs to work with AKAM: the token's on-chain identity, its immutable supply model, the raw Solidity constants that define it, and the Polygon PoS network configuration required to connect, query, and transact.
+
+## Token Details
+
+The table below lists the canonical properties of the AKAM token as defined in the deployed contract.
+
+| Property       | Value                           |
+| -------------- | ------------------------------- |
+| Name           | Akam                            |
+| Symbol         | AKAM                            |
+| Standard       | ERC-20                          |
+| Network        | Polygon PoS                     |
+| Total Supply   | 400,000,000 AKAM                |
+| Decimals       | 18                              |
+| Mintable       | No (fixed forever)              |
+| Burnable       | No                              |
+| Upgradeable    | No                              |
+| Owner / Admin  | None                            |
+
+<Warning>
+  The supply is permanently fixed. There is no mint function and no way to
+  increase the total supply beyond 400,000,000 AKAM.
+</Warning>
+
+## Supply Breakdown
+
+All 400,000,000 AKAM were minted to the deployer's address in a single operation at contract construction. No tokens have entered or can ever enter circulation by any other means.
+
+The supply originates from a private constant defined at the top of the contract:
+
+```solidity
+uint256 private constant INITIAL_SUPPLY = 400_000_000;
+```
+
+The constructor then calls OpenZeppelin's internal `_mint` function, scaling `INITIAL_SUPPLY` by `10 ** decimals()` (18 decimal places) to produce the correct raw token amount:
+
+```solidity
+constructor() ERC20("Akam", "AKAM") {
+    _mint(msg.sender, INITIAL_SUPPLY * 10 ** decimals());
+}
+```
+
+This means the raw on-chain `totalSupply()` value is:
+
+```
+400,000,000 × 10^18 = 400000000000000000000000000
+```
+
+That 26-digit integer is the number stored in the ERC-20 contract's internal balance mapping and returned by `totalSupply()`. Human-readable interfaces divide by `10^18` to display `400,000,000 AKAM`.
+
+<Tip>
+  When working with token amounts in code, always use the raw 18-decimal
+  representation. 1 AKAM = 1e18 base units.
+</Tip>
+
+## Network Details
+
+AKAM is deployed on Polygon PoS. Use the parameters below to configure your wallet, RPC client, or integration.
+
+| Parameter      | Value                                     |
+| -------------- | ----------------------------------------- |
+| Network Name   | Polygon PoS                               |
+| Chain ID       | 137                                       |
+| Native Token   | MATIC / POL                               |
+| RPC Endpoint   | https://polygon-rpc.com                   |
+| Block Explorer | https://polygonscan.com                   |
+| Block Time     | ~2 seconds                                |
+
+To add Polygon PoS to MetaMask or any EIP-3085-compatible wallet, use the values above. The `chainId` in hex is `0x89`.
+
+```bash
+# Example: querying the AKAM total supply via JSON-RPC
+cast call <CONTRACT_ADDRESS> "totalSupply()(uint256)" \
+  --rpc-url https://polygon-rpc.com
+```
+
+You can verify the deployed contract and inspect all transactions on [Polygonscan](https://polygonscan.com) by searching for the contract address.

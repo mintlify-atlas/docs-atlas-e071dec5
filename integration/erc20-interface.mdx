@@ -1,0 +1,231 @@
+---
+title: "ERC-20 Interface: Functions and Events for AKAM"
+sidebarTitle: "ERC-20 Interface"
+description: "Complete ERC-20 interface documentation for AKAM: all standard functions (transfer, approve, transferFrom) and events (Transfer, Approval) with Solidity signatures."
+---
+
+AkamToken implements the full ERC-20 standard as defined in [EIP-20](https://eips.ethereum.org/EIPS/eip-20) via OpenZeppelin's battle-tested `ERC20` base contract. Because the implementation is strictly standard-compliant, any wallet, DEX, or smart contract that supports ERC-20 tokens can interact with AKAM without any special integration, custom adapters, or non-standard function calls.
+
+<Note>
+  AKAM is fully ERC-20 compliant. No special wrapper or adapter is needed — use
+  the standard IERC20 interface directly.
+</Note>
+
+## Standard interface
+
+The complete ERC-20 interface that AkamToken satisfies:
+
+```solidity
+interface IERC20 {
+    function name() external view returns (string memory);
+    function symbol() external view returns (string memory);
+    function decimals() external view returns (uint8);
+    function totalSupply() external view returns (uint256);
+    function balanceOf(address account) external view returns (uint256);
+    function transfer(address to, uint256 value) external returns (bool);
+    function allowance(address owner, address spender) external view returns (uint256);
+    function approve(address spender, uint256 value) external returns (bool);
+    function transferFrom(address from, address to, uint256 value) external returns (bool);
+
+    event Transfer(address indexed from, address indexed to, uint256 value);
+    event Approval(address indexed owner, address indexed spender, uint256 value);
+}
+```
+
+## Function reference
+
+### `name()`
+
+Returns the human-readable name of the token.
+
+| Property | Value |
+|---|---|
+| Mutability | `view` |
+| Returns | `string memory` — `"Akam"` |
+
+---
+
+### `symbol()`
+
+Returns the ticker symbol used to represent the token in wallets and exchanges.
+
+| Property | Value |
+|---|---|
+| Mutability | `view` |
+| Returns | `string memory` — `"AKAM"` |
+
+---
+
+### `decimals()`
+
+Returns the number of decimal places used to display token amounts. All balances and transfer values are expressed in base units where `1 AKAM = 10^18` base units.
+
+| Property | Value |
+|---|---|
+| Mutability | `view` |
+| Returns | `uint8` — `18` |
+
+---
+
+### `totalSupply()`
+
+Returns the total number of AKAM tokens in existence. The supply is fixed at deployment and can never increase or decrease — there is no mint or burn function.
+
+| Property | Value |
+|---|---|
+| Mutability | `view` |
+| Returns | `uint256` — `400000000 × 10^18` (400,000,000 AKAM) |
+
+---
+
+### `balanceOf(address account)`
+
+Returns the AKAM balance held by a given address.
+
+<ParamField path="account" type="address" required>
+  The address to query the balance of.
+</ParamField>
+
+<ResponseField name="balance" type="uint256">
+  Token balance of `account` expressed in base units (18 decimals).
+</ResponseField>
+
+---
+
+### `transfer(address to, uint256 value)`
+
+Moves `value` base units of AKAM from the caller's account to `to`. Emits a `Transfer` event on success. Reverts if the caller's balance is less than `value`.
+
+<ParamField path="to" type="address" required>
+  Recipient address. Must not be the zero address.
+</ParamField>
+
+<ParamField path="value" type="uint256" required>
+  Amount to transfer in base units (18 decimals).
+</ParamField>
+
+<ResponseField name="success" type="bool">
+  Always `true` if the call does not revert.
+</ResponseField>
+
+---
+
+### `approve(address spender, uint256 value)`
+
+Sets the allowance that `spender` is permitted to withdraw from the caller's account via `transferFrom`. Overwrites any existing allowance. Emits an `Approval` event.
+
+<ParamField path="spender" type="address" required>
+  The address being granted the spending allowance.
+</ParamField>
+
+<ParamField path="value" type="uint256" required>
+  Maximum amount in base units that `spender` may transfer on the caller's behalf.
+</ParamField>
+
+<ResponseField name="success" type="bool">
+  Always `true` if the call does not revert.
+</ResponseField>
+
+---
+
+### `allowance(address owner, address spender)`
+
+Returns the remaining number of tokens that `spender` is still allowed to withdraw from `owner`.
+
+<ParamField path="owner" type="address" required>
+  The address that holds the tokens.
+</ParamField>
+
+<ParamField path="spender" type="address" required>
+  The address whose remaining allowance is queried.
+</ParamField>
+
+<ResponseField name="remaining" type="uint256">
+  Remaining allowance in base units that `spender` may still transfer from `owner`.
+</ResponseField>
+
+---
+
+### `transferFrom(address from, address to, uint256 value)`
+
+Moves `value` base units from `from` to `to` using the allowance mechanism. `value` is deducted from the caller's allowance. Requires that the caller has been previously approved by `from` via `approve`. Emits a `Transfer` event. Reverts if the allowance or `from`'s balance is insufficient.
+
+<ParamField path="from" type="address" required>
+  Address to transfer tokens from. The caller must have a sufficient allowance from this address.
+</ParamField>
+
+<ParamField path="to" type="address" required>
+  Recipient address.
+</ParamField>
+
+<ParamField path="value" type="uint256" required>
+  Amount to transfer in base units. Must not exceed the caller's allowance or `from`'s balance.
+</ParamField>
+
+<ResponseField name="success" type="bool">
+  Always `true` if the call does not revert.
+</ResponseField>
+
+---
+
+## Events
+
+### `Transfer`
+
+```solidity
+event Transfer(address indexed from, address indexed to, uint256 value);
+```
+
+Emitted whenever tokens move between addresses. Both `transfer` and `transferFrom` emit this event. The `from` and `to` fields are indexed, making it efficient to filter logs by sender or recipient.
+
+| Parameter | Type | Indexed | Description |
+|---|---|---|---|
+| `from` | `address` | ✅ | Address tokens were sent from. |
+| `to` | `address` | ✅ | Address tokens were sent to. |
+| `value` | `uint256` | ❌ | Amount transferred in base units. |
+
+This event is also emitted during the initial `_mint` call in the constructor, with `from` set to the zero address (`0x000...000`), signalling that new tokens entered circulation.
+
+---
+
+### `Approval`
+
+```solidity
+event Approval(address indexed owner, address indexed spender, uint256 value);
+```
+
+Emitted whenever an owner updates a spending allowance for a spender via `approve`. The new `value` replaces any previously recorded allowance — it is not additive.
+
+| Parameter | Type | Indexed | Description |
+|---|---|---|---|
+| `owner` | `address` | ✅ | Address that granted the allowance. |
+| `spender` | `address` | ✅ | Address that received the allowance. |
+| `value` | `uint256` | ❌ | New allowance amount in base units. |
+
+---
+
+## Using AKAM in a Solidity contract
+
+Import the standard OpenZeppelin `IERC20` interface and point it at the deployed AKAM contract address. No custom interface or ABI extension is required.
+
+```solidity
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.20;
+
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+
+contract MyContract {
+    IERC20 public constant AKAM = IERC20(/* AKAM contract address */);
+
+    function checkBalance(address user) external view returns (uint256) {
+        return AKAM.balanceOf(user);
+    }
+
+    function spend(uint256 amount) external {
+        // Requires caller to have approved this contract first
+        AKAM.transferFrom(msg.sender, address(this), amount);
+    }
+}
+```
+
+Because AKAM uses the standard 18-decimal convention, multiply human-readable amounts by `10 ** 18` (or use `1 ether` as a constant) when passing values to these functions inside Solidity contracts.

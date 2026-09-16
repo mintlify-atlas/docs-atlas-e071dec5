@@ -1,0 +1,91 @@
+---
+title: "Akam Token: Immutable ERC-20 Token on Polygon"
+sidebarTitle: "Introduction"
+description: "Akam Token (AKAM) is a fixed-supply ERC-20 smart contract on Polygon PoS built with OpenZeppelin and Foundry. No minting, no admin keys."
+---
+
+Akam Token (AKAM) is a minimalist, immutable ERC-20 token deployed on the Polygon PoS network. The contract mints a fixed supply of 400,000,000 AKAM exactly once — at the moment of deployment — and can never mint or burn tokens again. There is no owner, no admin key, and no upgrade mechanism. Once deployed, the contract is entirely governed by its bytecode and the rules of the EVM, making it fully trustless and permissionless from day one.
+
+## What is Akam Token?
+
+AkamToken is a Solidity smart contract that extends OpenZeppelin's battle-tested `ERC20` base implementation. The contract itself is deliberately small: the entire token logic fits in a single constructor call.
+
+```solidity
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.20;
+
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+
+contract AkamToken is ERC20 {
+    uint256 private constant INITIAL_SUPPLY = 400_000_000;
+
+    constructor() ERC20("Akam", "AKAM") {
+        _mint(msg.sender, INITIAL_SUPPLY * 10 ** decimals());
+    }
+}
+```
+
+When the constructor runs, `_mint` is called exactly once. It credits the deployer's address with `400_000_000 × 10^18` base units — the full supply, expressed in the token's 18-decimal denomination. Because there is no public `mint` function and no inherited minting role, this is the only time new AKAM can ever enter circulation.
+
+<Note>
+  The contract has no `mint` function and no owner. Once deployed, no one can
+  create or destroy AKAM tokens.
+</Note>
+
+## Why Polygon?
+
+Polygon PoS (Proof of Stake) is an EVM-compatible Layer 2 / sidechain network that runs alongside Ethereum mainnet. It was chosen for AKAM for several practical reasons:
+
+- **EVM compatibility** — Any tool, wallet, or library written for Ethereum works with Polygon out of the box. Deploying a standard ERC-20 requires zero modifications to the Solidity source.
+- **Low gas fees** — Transaction fees on Polygon PoS are a fraction of a cent, making it economical to transfer and interact with AKAM at any scale.
+- **Fast finality** — Blocks are produced roughly every two seconds, so transfers confirm quickly without long wait times.
+- **Large ecosystem** — Polygon PoS is supported by every major wallet (MetaMask, Coinbase Wallet, Ledger), all leading DEX aggregators, and the widest range of multi-chain bridges, giving AKAM immediate reach across DeFi infrastructure.
+
+## Design Principles
+
+AKAM is built around four core principles that together eliminate counterparty risk and maximize interoperability:
+
+**Fixed supply.** The `INITIAL_SUPPLY` constant is set at compile time and applied once in the constructor. There is no code path that can increase or decrease the total supply after deployment. The token's economics are immutable.
+
+**No privileged roles.** The contract does not inherit `Ownable`, `AccessControl`, or any other role-based module. There is no address that can pause transfers, freeze accounts, upgrade the contract, or change any parameter. Every holder has exactly equal standing.
+
+**Fully standard ERC-20.** AkamToken implements the complete ERC-20 interface without modification or extension. It is compatible with every wallet, DEX, bridge, and integration that speaks standard ERC-20 — no custom logic for integrators to audit or accommodate.
+
+**Audited base via OpenZeppelin.** Rather than implementing token logic from scratch, the contract inherits from OpenZeppelin's `ERC20.sol` — the most widely reviewed and deployed ERC-20 implementation in existence. The custom code added on top of that base is three lines.
+
+---
+
+<CardGroup cols={2}>
+  <Card
+    title="Token Specifications"
+    icon="table"
+    href="/token-specifications"
+  >
+    Full technical specs: supply, decimals, network details, and the Polygon
+    PoS chain parameters.
+  </Card>
+  <Card
+    title="Getting Started"
+    icon="rocket"
+    href="/getting-started"
+  >
+    Add AKAM to your wallet, query balances, and make your first transfer on
+    Polygon PoS.
+  </Card>
+  <Card
+    title="Contract Reference"
+    icon="file-code"
+    href="/contract-reference"
+  >
+    Detailed documentation of every function, event, and constant exposed by
+    the AkamToken contract.
+  </Card>
+  <Card
+    title="ERC-20 Interface"
+    icon="plug"
+    href="/integration/erc20-interface"
+  >
+    Integration guide for wallets, DEXes, and dApps connecting to the standard
+    ERC-20 interface.
+  </Card>
+</CardGroup>
